@@ -11,6 +11,7 @@ public class SynapseManager : NDInteractablesManager<Synapse>
     public float placementTimestamp;
     public Synapse synapseInProgress = null; //Contains presynapse when a presynapse has been placed but no post synapse
     public List<(Synapse, Synapse)> synapses = new List<(Synapse, Synapse)>(); //pre (Item1) and post (Item2) synapses
+    public Material glowMat; // Reference to the glow material
 
     public override GameObject IdentifyBuildPrefab(NDSimulation sim, int index)
     {
@@ -172,6 +173,10 @@ public class SynapseManager : NDInteractablesManager<Synapse>
         // Assign current synapses to fields of ArrowUpdate to ensure color changes with synapse model
         arrowHead.GetComponent<ArrowUpdate>().pre = pre;
         arrowHead.GetComponent<ArrowUpdate>().post = post;
+
+        // Apply glowing state if synapse is active
+        ArrowGlowManager arrowGlowManager = arrowHead.AddComponent<ArrowGlowManager>();
+        arrowGlowManager.glowMat = glowMat; // Assign glow material 
     }
 
     /// <summary>

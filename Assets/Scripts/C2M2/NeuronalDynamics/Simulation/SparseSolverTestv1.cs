@@ -145,6 +145,8 @@ namespace C2M2.NeuronalDynamics.Simulation
         CompressedColumnStorage<double> l_csc;              //This is for the lhs sparse matrix
         private SparseLU lu;                                //Initialize the LU factorizaation
 
+        public static bool isSynapseActive;                 //This is for tracking if any synapse is active globally
+
         /// <summary>
         /// Send simulation 1D values, this send the current voltage after the solve runs 1 iteration
         /// it passes <c>curVals</c>
@@ -238,7 +240,15 @@ namespace C2M2.NeuronalDynamics.Simulation
                     if (newVal.Item1.FocusVert >= 0 && newVal.Item1.FocusVert < Neuron.nodes.Count && newVal.Item2.FocusVert >= 0 && newVal.Item2.FocusVert < Neuron.nodes.Count)
                     {
                         // compute the synaptic current at the postsynapse using an explicity SBDF update
-                        Isyn[newVal.Item2.FocusVert] += SynapseExplicitSBDF(newVal);
+                        double synapticCurrent = SynapseExplicitSBDF(newVal);
+                        Isyn[newVal.Item2.FocusVert] += synapticCurrent;
+
+                        // Determine if synapse is active based on the threshold
+                        isSynapseActive = synapticCurrent > 0.000001;
+
+                        
+                        // Debug log to verify activity status
+                        Debug.Log($"Synapse between pre-synapse {newVal.Item1.Id} and post-synapse {newVal.Item2.Id} is {(isSynapseActive ? "active" : "inactive")}");
                     }
                 }
             }

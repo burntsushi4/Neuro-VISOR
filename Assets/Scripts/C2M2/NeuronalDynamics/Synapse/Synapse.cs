@@ -11,7 +11,7 @@ public class Synapse : NDInteractables
     public Material inhibitoryMat;
     public Material excitatoryMat;
     public Material prePlaceMat;
-    
+    public Material glowMat; 
     public int Id;
 
     public double ActivationTime { get; set; }
@@ -112,5 +112,30 @@ public class Synapse : NDInteractables
     {
         if (currentModel == Model.NMDA) SwitchMaterial(excitatoryMat);
         else SwitchMaterial(inhibitoryMat);
+    }
+
+        // Method to make the synapse glow
+    public void SetGlow()
+    {
+        SwitchMaterial(glowMat);
+    }
+
+    // Method to update the glow effect based on isSynapseActive
+    private void UpdateGlow()
+    {
+        if (SparseSolverTestv1.isSynapseActive)
+        {
+            SetGlow();
+        }
+        else
+        {
+            SetToModeMaterial(); // Reset to the original material if it's not active
+        }
+    }
+
+    private void Update()
+    {
+        // Continuously update the glow status
+        UpdateGlow();
     }
 }
