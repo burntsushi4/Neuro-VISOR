@@ -114,7 +114,7 @@ public class Synapse : NDInteractables
         else SwitchMaterial(inhibitoryMat);
     }
 
-        // Method to make the synapse glow
+    // Method to make the synapse glow
     public void SetGlow()
     {
         SwitchMaterial(glowMat);
