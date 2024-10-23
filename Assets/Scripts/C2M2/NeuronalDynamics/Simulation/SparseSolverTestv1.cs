@@ -240,11 +240,10 @@ namespace C2M2.NeuronalDynamics.Simulation
                     if (newVal.Item1.FocusVert >= 0 && newVal.Item1.FocusVert < Neuron.nodes.Count && newVal.Item2.FocusVert >= 0 && newVal.Item2.FocusVert < Neuron.nodes.Count)
                     {
                         // compute the synaptic current at the postsynapse using an explicity SBDF update
-                        double synapticCurrent = SynapseExplicitSBDF(newVal);
-                        Isyn[newVal.Item2.FocusVert] += synapticCurrent;
+                        Isyn[newVal.Item2.FocusVert] += SynapseExplicitSBDF(newVal);
 
                         // Determine if synapse is active based on the threshold
-                        isSynapseActive = synapticCurrent > 0.000001;
+                        isSynapseActive = Isyn[newVal.Item2.FocusVert] > 0.000001;
 
                         
                         // Debug log to verify activity status
