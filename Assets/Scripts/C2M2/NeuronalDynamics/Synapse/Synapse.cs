@@ -16,6 +16,8 @@ public class Synapse : NDInteractables
 
     public double ActivationTime { get; set; }
 
+    public bool isSynapseActive { get; set; } = false;
+
     public enum Model
     {
         NMDA,
@@ -120,22 +122,4 @@ public class Synapse : NDInteractables
         SwitchMaterial(glowMat);
     }
 
-    // Method to update the glow effect based on isSynapseActive
-    private void UpdateGlow()
-    {
-        if (SparseSolverTestv1.isSynapseActive)
-        {
-            SetGlow();
-        }
-        else
-        {
-            SetToModeMaterial(); // Reset to the original material if it's not active
-        }
-    }
-
-    private void Update()
-    {
-        // Continuously update the glow status
-        UpdateGlow();
-    }
 }

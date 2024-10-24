@@ -1,10 +1,13 @@
-﻿using C2M2.NeuronalDynamics.Simulation;
+﻿/*
+using C2M2.NeuronalDynamics.Simulation;
 using UnityEngine;
 
 public class ArrowGlowManager : MonoBehaviour
 {
     public Material glowMat;
     private Material originalMaterial;
+
+    public bool isSynapseActive { get; set; } = false;
 
     /// <summary>
     /// A script to update arrow effects based on voltage activity
@@ -42,7 +45,7 @@ public class ArrowGlowManager : MonoBehaviour
     private void Update()
     {
         // Example: Sync glow state with the synapse active state
-        if (SparseSolverTestv1.isSynapseActive)
+        if (isSynapseActive)
         {
             SetGlow();
         }
@@ -52,3 +55,4 @@ public class ArrowGlowManager : MonoBehaviour
         }
     }
 }
+*/

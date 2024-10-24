@@ -11,7 +11,7 @@ public class SynapseManager : NDInteractablesManager<Synapse>
     public float placementTimestamp;
     public Synapse synapseInProgress = null; //Contains presynapse when a presynapse has been placed but no post synapse
     public List<(Synapse, Synapse)> synapses = new List<(Synapse, Synapse)>(); //pre (Item1) and post (Item2) synapses
-    public Material glowMat; // Reference to the glow material
+    
 
     public override GameObject IdentifyBuildPrefab(NDSimulation sim, int index)
     {
@@ -175,8 +175,8 @@ public class SynapseManager : NDInteractablesManager<Synapse>
         arrowHead.GetComponent<ArrowUpdate>().post = post;
 
         // Apply glowing state if synapse is active
-        ArrowGlowManager arrowGlowManager = arrowHead.AddComponent<ArrowGlowManager>();
-        arrowGlowManager.glowMat = glowMat; // Assign glow material 
+        //ArrowGlowManager arrowGlowManager = arrowHead.AddComponent<ArrowGlowManager>();
+        //arrowGlowManager.glowMat = glowMat; // Assign glow material 
     }
 
     /// <summary>
@@ -211,4 +211,41 @@ public class SynapseManager : NDInteractablesManager<Synapse>
         }
         return true;
     }
+
+    public void UpdateSynapseGlow()
+    {
+        foreach ((Synapse preSynapse, Synapse postSynapse) in synapses)
+        {
+            // Debug log to verify synapse IDs and active status
+            Debug.Log($"Updating glow for Synapse pair - Pre ID: {preSynapse.Id}, Post ID: {postSynapse.Id}, Pre Active: {preSynapse.isSynapseActive}, Post Active: {postSynapse.isSynapseActive}");
+
+            // Check the activity state of the pre-synapse and update its material
+            if (preSynapse.isSynapseActive)
+            {
+                preSynapse.SetGlow();
+            }
+            else
+            {
+                preSynapse.SetToModeMaterial();
+            }
+
+            // Check the activity state of the post-synapse and update its material
+            if (postSynapse.isSynapseActive)
+            {
+                postSynapse.SetGlow();
+            }
+            else
+            {
+                postSynapse.SetToModeMaterial();
+            }
+        }
+    }
+
+
+    private void Update()
+    {
+        UpdateSynapseGlow();
+    }
+
+
 }

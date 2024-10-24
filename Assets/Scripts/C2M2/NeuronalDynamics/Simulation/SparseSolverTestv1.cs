@@ -145,7 +145,7 @@ namespace C2M2.NeuronalDynamics.Simulation
         CompressedColumnStorage<double> l_csc;              //This is for the lhs sparse matrix
         private SparseLU lu;                                //Initialize the LU factorizaation
 
-        public static bool isSynapseActive;                 //This is for tracking if any synapse is active globally
+        public bool isSynapseActive;                 //This is for tracking if any synapse is active globally
 
         /// <summary>
         /// Send simulation 1D values, this send the current voltage after the solve runs 1 iteration
