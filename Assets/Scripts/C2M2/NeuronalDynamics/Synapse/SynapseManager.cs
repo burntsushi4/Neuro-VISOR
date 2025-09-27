@@ -165,10 +165,6 @@ public class SynapseManager : NDInteractablesManager<Synapse>
 
         // Create a new arrow in 3D space
         arrowHead = Instantiate(arrowPrefab, new Vector3(0, 0, 0), Quaternion.identity) as GameObject;
-        /* Use Vector3 lerp so the position does not set it to the middle of the pre synapse but rather in the middle of both the pre-synapse and post-synapse*/
-        arrowHead.transform.position = Vector3.Lerp(preSynapse.position, postSynapse.position, 0.5f);
-        arrowHead.transform.LookAt(postSynapse.position);
-
 
         ArrowUpdate arrowUpdate = arrowHead.GetComponent<ArrowUpdate>();
         // Add the method to update arrows when user moves the neurons
@@ -177,10 +173,6 @@ public class SynapseManager : NDInteractablesManager<Synapse>
         // Assign current synapses to fields of ArrowUpdate to ensure color changes with synapse model
         arrowUpdate.pre = pre;
         arrowUpdate.post = post;
-        
-        //Handles changing the label of the synapse arrow
-        //TextMeshPro textField = arrowHead.GetComponentInChildren<TextMeshPro>();
-        //arrowHead.GetComponent<ArrowUpdate>().nameField = textField;
     }
 
     /// <summary>

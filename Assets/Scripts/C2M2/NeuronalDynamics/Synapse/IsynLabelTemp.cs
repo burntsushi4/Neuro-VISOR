@@ -1,0 +1,51 @@
+﻿using UnityEngine;
+using TMPro;
+
+public class IsynLabelTemp : MonoBehaviour
+{
+    public Synapse self;
+    private Synapse pre;
+    private Synapse post;
+    public TMP_Text label;
+
+    void Awake()
+    {
+        if (label != null)
+        {
+            label.gameObject.SetActive(false);
+        }
+    }
+
+    void Update()
+    {
+        if (post == null)
+        {
+            SynapseManager manager = self.SynapseManager;
+
+            var pairs = manager.FindSynapsePair(self);
+
+            var pair = pairs[0];
+            pre = pair.Item1;
+            post = pair.Item2;
+
+            if (label != null && self == post)
+            {
+                label.gameObject.SetActive(true);
+            }
+        }
+        if (post == null || self != post)
+            return;
+
+        float iSyn = (float)post.currentIsyn;
+        float iMax = 1.144e-9f;
+        float iSynDivided = iSyn;
+
+        double taud = 3.0e-4;
+
+
+        if (label != null)
+        {
+            label.text = "iCurrs: " + iSynDivided.ToString();
+        }
+    }
+}

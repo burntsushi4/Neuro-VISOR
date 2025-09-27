@@ -58,7 +58,7 @@ public class ArrowUpdate : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        
+
         nameField.text = pre.currentModel.Value.getModelName();
 
         Vector3 p1 = preSynapse.position;
@@ -73,7 +73,7 @@ public class ArrowUpdate : MonoBehaviour
         {
             // a single continuous body from 0.0 to 0.8
             float arrowBodyStart = 0f;
-            float arrowBodyEnd = 0.8f; 
+            float arrowBodyEnd = 0.8f;
             UpdateBodySegment(arrowBody, p1, direction, arrowBodyStart, arrowBodyEnd, fullLength, r1, r2);
             UpdateArrowhead(p1, direction, fullLength);
         }
@@ -94,30 +94,9 @@ public class ArrowUpdate : MonoBehaviour
             UpdateParticleSystem();
         }
 
-        UpdateColor();
+        UpdateMaterial();
+        UpdateLabel(p1, p2);
     }
-
-
-
-    void UpdateColor()
-    {
-        Material newMaterial = null;
-
-        if (pre.currentModel.Value.isExcitatory())
-        {
-            newMaterial = pre.excitatoryMat;
-        }
-        else
-        {
-            newMaterial = pre.inhibitoryMat;
-        }
-
-        foreach (MeshRenderer mr in GetComponentsInChildren<MeshRenderer>())
-        {
-            mr.material = newMaterial;
-        }
-    }
-
 
     public void SetMode(VisualMode newMode)
     {
@@ -135,6 +114,34 @@ public class ArrowUpdate : MonoBehaviour
         }
     }
 
+    void UpdateMaterial()
+    {
+        Material newMaterial = null;
+
+        if (pre.currentModel.Value.isExcitatory())
+        {
+            newMaterial = pre.excitatoryMat;
+        }
+        else
+        {
+            newMaterial = pre.inhibitoryMat;
+        }
+
+        foreach (MeshRenderer mr in GetComponentsInChildren<MeshRenderer>())
+        {
+            // inhibitory/excitatory materials do not apply to text objects
+            // alternatively could make mat changes only to arrow/disk components
+            if (mr.GetComponent<TMP_Text>() != null)
+                continue;
+
+            mr.material = newMaterial;
+        }
+    }
+    void UpdateLabel(Vector3 p1, Vector3 p2)
+    {
+        Vector3 midpoint = (p1 + p2) * 0.5f;
+        nameField.transform.position = midpoint;
+    }
 
     void UpdateBodySegment(Transform body, Vector3 p1, Vector3 direction, float startLocation, float endLocation, float fullLength, float r1, float r2)
     {
