@@ -95,7 +95,7 @@ public class ArrowUpdate : MonoBehaviour
         }
 
         UpdateMaterial();
-        UpdateLabel(p1, p2);
+        UpdateLabel(p1, p2, r1, r2);
     }
 
     public void SetMode(VisualMode newMode)
@@ -137,9 +137,11 @@ public class ArrowUpdate : MonoBehaviour
             mr.material = newMaterial;
         }
     }
-    void UpdateLabel(Vector3 p1, Vector3 p2)
+    void UpdateLabel(Vector3 p1, Vector3 p2, float r1, float r2)
     {
         Vector3 midpoint = (p1 + p2) * 0.5f;
+        midpoint.y += r1 + r2 * 0.6f;
+        nameField.fontSize = r1 + r2 * 15f;
         nameField.transform.position = midpoint;
     }
 

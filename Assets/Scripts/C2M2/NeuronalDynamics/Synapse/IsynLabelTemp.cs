@@ -38,14 +38,14 @@ public class IsynLabelTemp : MonoBehaviour
 
         float iSyn = (float)post.currentIsyn;
         float iMax = 1.144e-9f;
-        float iSynDivided = iSyn;
+        float iSynDivided = iSyn / 1e-10f;
 
         double taud = 3.0e-4;
 
 
         if (label != null)
         {
-            label.text = "iCurrs: " + iSynDivided.ToString();
+            label.text = "iCurrs: " + iSynDivided.ToString("F3");
         }
     }
 }
