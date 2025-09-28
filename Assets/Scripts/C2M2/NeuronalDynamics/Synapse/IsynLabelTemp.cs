@@ -45,7 +45,7 @@ public class IsynLabelTemp : MonoBehaviour
 
         if (label != null)
         {
-            label.text = "iCurrs: " + iSynDivided.ToString("F3");
+            label.text = "iCurrs: " + iSynDivided.ToString("F3") + "\n (t - ts) / taud: " + ((self.simulation.GetSimulationTime() - pre.ts) / taud).ToString("F3");
         }
     }
 }
