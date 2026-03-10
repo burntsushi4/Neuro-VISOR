@@ -9,6 +9,8 @@ public class NDGraph : NDInteractables
 
     public NDLineGraph ndlinegraph;
 
+    //if set, this graph plots synapse current instead of the other plot
+    public Synapse trackedSynapse = null;
     // Start is called before the first frame update
     void Awake()
     {
@@ -36,8 +38,11 @@ public class NDGraph : NDInteractables
             Debug.LogError("Invalid vertex given to NDLineGraph");
             Destroy(this);
         }
-        name = "Graph(" + simulation.name + ")[vert" + FocusVert + "]";
         //reflects whether this is a synapse plot or voltage plot... specify neuron-vert?
+        if (trackedSynapse != null)
+            name = "Graph(" + simulation.name + ")[synapse-vert" + FocusVert + "]";
+        else
+            name = "Graph(" + simulation.name + ")[vert" + FocusVert + "]";
 
         GraphManager.graphs.Add(this);
     }
