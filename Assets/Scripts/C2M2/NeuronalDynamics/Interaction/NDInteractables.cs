@@ -44,6 +44,18 @@ public abstract class NDInteractables : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// move this interactable to a new vertex after it has already been placed
+    /// re-parents to the new simulation so cross-neuron moves work correctly
+    /// </summary>
+    public void Relocate(NDSimulation sim, int index)
+    {
+        simulation = sim;
+        FocusVert = index;
+        transform.SetParent(sim.transform);
+        Place(index);
+    }
+
     public abstract void Place(int index);
 
     protected abstract void AddHitEventListeners();

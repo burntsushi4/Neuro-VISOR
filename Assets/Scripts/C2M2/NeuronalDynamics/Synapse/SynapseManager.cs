@@ -14,7 +14,10 @@ public class SynapseManager : NDInteractablesManager<Synapse>
     public float placementTimestamp;
     public Synapse synapseInProgress = null; //Contains presynapse when a presynapse has been placed but no post synapse
     public List<(Synapse, Synapse)> synapses = new List<(Synapse, Synapse)>(); //pre (Item1) and post (Item2) synapses
-
+    public Synapse synapseBeingMoved = null;
+    private Synapse movingPre = null;
+    private Synapse movingPost = null;
+    public bool IsMovingSynapse => synapseBeingMoved != null;
     public override GameObject IdentifyBuildPrefab(NDSimulation sim, int index)
     {
         if (synapsePrefab == null)
@@ -60,15 +63,15 @@ public class SynapseManager : NDInteractablesManager<Synapse>
     {
         if (synapseInProgress == null) //Pre Synapse
         {
-            Synapse prePlaced = placedSynapse.Clone();
-            prePlaced.SetPrePlace();
-            synapseInProgress = prePlaced;
+            //Synapse prePlaced = placedSynapse.Clone();
+            placedSynapse.SetPrePlace();
+            synapseInProgress = placedSynapse;
             placementTimestamp = Time.time;
         }
         else //Post Synapse
         {
-            Synapse postPlaced = placedSynapse.Clone();
-            synapses.Add((synapseInProgress, postPlaced));
+            //Synapse postPlaced = placedSynapse.Clone();
+            synapses.Add((synapseInProgress, placedSynapse));
             PrePlaceCheck(synapseInProgress);
             synapseInProgress = null;
 
@@ -133,6 +136,51 @@ public class SynapseManager : NDInteractablesManager<Synapse>
         }
         return false;
     }
+
+
+    public void BeginMoveSynapse(Synapse syn)
+    {
+        var pairs = FindSynapsePair(syn);
+        if (pairs == null || pairs.Count == 0) return;
+        var pair = pairs[0];
+        movingPre = pair.Item1;
+        movingPost = pair.Item2;
+        synapseBeingMoved = syn;
+        syn.SwitchMaterial(syn.GABAMat);  // Don't remove from synapses yet, only commit on finishmove, gabamat is a placeholder
+    }
+
+    public void FinishMoveSynapse(NDSimulation sim, int index)
+    {
+        if (synapseBeingMoved == null) return;
+        var pairs = FindSynapsePair(synapseBeingMoved);
+        if (pairs != null && pairs.Count > 0)
+            synapses.Remove(pairs[0]);
+        synapseBeingMoved.Relocate(sim, index);
+        movingPre.ActivationTime = 0; // reset so isActive() can fire again
+        synapses.Add((movingPre, movingPost));
+        movingPre.SetToModeMaterial();
+        movingPost.SetToModeMaterial();
+        synapseBeingMoved = null;
+        movingPre = null;
+        movingPost = null;
+    }
+
+
+    public override Synapse InstantiateNDInteractable(RaycastHit hit)
+    {
+        if (IsMovingSynapse)
+        {
+            NDSimulation sim = hit.collider.GetComponentInParent<NDSimulation>();
+            if (sim != null)
+            {
+                int index = sim.GetNearestPoint(hit);
+                FinishMoveSynapse(sim, index);
+            }
+            return null;
+        }
+        return base.InstantiateNDInteractable(hit);
+    }
+
 
     public bool ChangeModel(Synapse syn, ISynapseModel model)
     {

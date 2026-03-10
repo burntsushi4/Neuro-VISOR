@@ -95,7 +95,7 @@ public abstract class NDInteractablesManager<T> : MonoBehaviour
         HitEvent.OnPress.AddListener((hit) => InstantiateNDInteractable(hit));
     }
 
-    public T InstantiateNDInteractable(RaycastHit hit)
+    public virtual T InstantiateNDInteractable(RaycastHit hit)
     {
         NDSimulation currentSimulation = hit.collider.GetComponentInParent<NDSimulation>();
         if (currentSimulation != null)

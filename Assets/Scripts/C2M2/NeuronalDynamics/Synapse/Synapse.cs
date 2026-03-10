@@ -24,6 +24,8 @@ public class Synapse : NDInteractables
     public int Id;
 
 
+    private float lastTapTime = -999f;
+    private const float DoubleTapWindow = 0.3f;
     public double ActivationTime { get; set; }
 
     public double currentIsyn { get; set; } = 0;
@@ -106,7 +108,28 @@ public class Synapse : NDInteractables
         // Place synapse 
         else if (GameManager.instance.simulationManager.FeatState == NDSimulationManager.FeatureState.Synapse)
         {
-            SynapseManager.SynapticPlacement(this);
+        // If a move is in progress, any tap should finish it at this synapse's location
+        if (SynapseManager.IsMovingSynapse)
+        {
+            SynapseManager.FinishMoveSynapse(simulation, FocusVert);
+        }
+            else
+            {
+                var pair = SynapseManager.FindSynapsePair(this);
+                bool isPlaced = pair != null && pair.Count > 0;
+
+                if (isPlaced && (Time.time - lastTapTime) <= DoubleTapWindow)
+                {
+                    SynapseManager.BeginMoveSynapse(this);
+                    lastTapTime = -999f;
+                }
+                else
+                {
+                    if (!isPlaced)
+                        SynapseManager.SynapticPlacement(this);
+                    lastTapTime = Time.time;
+                }
+            }
         }
         SynapseManager.HoldCount = 0;
     }
