@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using TMPro;
-
 public class ArrowUpdate : MonoBehaviour
 {
     public Transform preSynapse;
@@ -17,7 +16,7 @@ public class ArrowUpdate : MonoBehaviour
     [SerializeField] private Transform arrowBody;
     [SerializeField] private Transform arrowHead;
 
-    [Header("Disk mode")]
+    [Header("Terminal mode")]
     [SerializeField] private GameObject diskComponents;
     [SerializeField] private Transform body1;
     [SerializeField] private Transform body2;
@@ -31,13 +30,22 @@ public class ArrowUpdate : MonoBehaviour
 
     private float particleSize;
 
+    private float previousCleftLength = 1f;
 
     public enum VisualMode { Arrow, Disk }
     private static VisualMode globalMode = VisualMode.Arrow;
     private VisualMode mode;
 
-    //TODO: several hard-coded vars (most notably 0.8). Refactor all instances to reference arrowBodyEnd
+    Vector3 _p_pre;
+    Vector3 _direction;
+    float _fullLength;
+    float _r_pre;
+    float _r_post;
 
+
+
+    //TODO: rename body to shaft?
+    //TODO: cache the arrays of mesh vertices to bring the GC allocation closer to 0 
     void Start()
     {
         // In UpdateBodySegment(), the vertices of the cylinder mesh are deformed to interpolate the mesh's y-axis between the radii of the the pre and post synapses
@@ -47,13 +55,15 @@ public class ArrowUpdate : MonoBehaviour
         originalMesh = Instantiate(meshFilter.sharedMesh);
         meshFilter.mesh = originalMesh;
 
-        //mode = globalMode;
         SetGlobalMode(globalMode);
     }
 
 
     void Update()
     {
+        //Debug.Log(1f/0f);
+
+        //Debug.Log("exp^5000" + 0.0/0.0);
         if (preSynapse == null || postSynapse == null)
         {
             Destroy(gameObject);
@@ -62,41 +72,70 @@ public class ArrowUpdate : MonoBehaviour
 
         nameField.text = pre.currentModel.Value.getModelName();
 
-        Vector3 p1 = preSynapse.position;
-        Vector3 p2 = postSynapse.position;
-        Vector3 direction = (p2 - p1).normalized;
-        float fullLength = Vector3.Distance(p1, p2);
+        Vector3 p_pre = preSynapse.position;
+        Vector3 p_post = postSynapse.position;
+        Vector3 direction = (p_post - p_pre).normalized;
+        float fullLength = Vector3.Distance(p_pre, p_post);
 
-        float r1 = GetVisualRadius(preSynapse);
-        float r2 = GetVisualRadius(postSynapse);
+        float r_pre = GetVisualRadius(preSynapse);
+        float r_post = GetVisualRadius(postSynapse);
+
+        // These are all to cache local variables and invoke in other methods. 
+        _p_pre = p_pre;
+        _direction = direction;
+        _fullLength = fullLength;
+        _r_pre = r_pre;
+        _r_post = r_post;
+
 
         if (mode == VisualMode.Arrow)
         {
-            // a single continuous body from 0.0 to 0.8
+            // The arrow contains a single continuous body that goes from 0 to 0.8. 
             float arrowBodyStart = 0f;
             float arrowBodyEnd = 0.8f;
-            UpdateBodySegment(arrowBody, p1, direction, arrowBodyStart, arrowBodyEnd, fullLength, r1, r2);
-            UpdateArrowhead(p1, direction, fullLength);
+            UpdateBodySegment(arrowBody, arrowBodyStart, arrowBodyEnd);
+
+            // The arrowhead starts where the arrow body ends and ends at 1. 
+            UpdateArrowhead(arrowBodyEnd, 1f);
         }
 
 
         if (mode == VisualMode.Disk)
         {
-            float cleftPosition1 = 0.6f;
-            float cleftPosition2 = 0.8f;
+            float referenceRadius = (r_pre + r_post) * 0.5f; // use average of synaptic vertex radii as reference length scale
+            float cleftMinimumLength = referenceRadius * 2f; // minimum length of synaptic cleft (when synapse long enough)
+            float cleftMaximumLength = referenceRadius * 3f; // maximum length of synaptic cleft
 
-            float radius = r1 + (r2 - r1) * (cleftPosition1 + cleftPosition2) * 0.5f;
+            float cleftLength = Mathf.Clamp(0.2f * fullLength, cleftMinimumLength, cleftMaximumLength); // if within above bounds, make cleft 0.2 of synapse length
+            float cleftCenterPosition = 0.7f; // center point of synaptic cleft (when synapse long enough)
 
-            UpdateBodySegment(body1, p1, direction, 0f, cleftPosition1, fullLength, r1, r2);
-            UpdateBodySegment(body2, p1, direction, cleftPosition2, 1f, fullLength, r1, r2);
-            UpdateDisk(disk1, p1 + direction * (cleftPosition1 * fullLength), direction, radius, fullLength);
-            UpdateDisk(disk2, p1 + direction * (cleftPosition2 * fullLength), direction * -1f, radius, fullLength);
+            float synapsePositionPresynVertex = 0f;
+            float synapsePositionPresynCleft = Mathf.Max(cleftCenterPosition - cleftLength / fullLength * 0.5f, 0.2f); // relative presynaptic terminal position
+            float synapsePositionPostsynCleft = Mathf.Min(cleftCenterPosition + cleftLength / fullLength * 0.5f, 0.8f); // relative postsynaptic terminal position
+            float synapsePositionPostsynVertex = 1f;
 
-            UpdateParticleSystem();
+            Debug.Log("synapsePositionPresynCleft: " + synapsePositionPresynCleft + "synapsePositionPostsynCleft" + synapsePositionPostsynCleft);
+            //this is the radius at the midpoint of the synapse interpolated between pre/post
+            float radius = Mathf.Lerp(r_pre, r_post, 0.5f);
+
+            //float particleSpeed = (synapsePositionPostsynCleft - synapsePositionPresynCleft) * fullLength * 0.1f;
+            float cleftWorldLength = (synapsePositionPostsynCleft - synapsePositionPresynCleft) * fullLength;
+
+
+            UpdateBodySegment(body1, synapsePositionPresynVertex, synapsePositionPresynCleft);
+            UpdateBodySegment(body2, synapsePositionPostsynCleft, synapsePositionPostsynVertex);
+
+            Vector3 preSynPos = PositionAlongArrow(p_pre, p_post, synapsePositionPresynCleft);
+            Vector3 postSynPos = PositionAlongArrow(p_pre, p_post, synapsePositionPostsynCleft);
+
+            UpdateDisk(disk1, preSynPos, direction, radius, fullLength);
+            UpdateDisk(disk2, postSynPos, -direction, radius, fullLength);
+            UpdateParticleSystem(cleftWorldLength);
+        
         }
 
         UpdateMaterial();
-        UpdateLabel(p1, p2, r1, r2);
+        UpdateLabel(p_pre, p_post, r_pre, r_post);
     }
 
     public void SetMode(VisualMode newMode)
@@ -150,7 +189,7 @@ public class ArrowUpdate : MonoBehaviour
             arrowBody.GetComponent<MeshRenderer>().material = textMaterial;
             arrowHead.GetComponent<MeshRenderer>().material = typeMaterial;
         }
-        else // Disk mode
+        else // Terminal mode
         {
             body1.GetComponent<MeshRenderer>().material = textMaterial;
             body2.GetComponent<MeshRenderer>().material = textMaterial;
@@ -161,20 +200,24 @@ public class ArrowUpdate : MonoBehaviour
 
     }
 
-    void UpdateLabel(Vector3 p1, Vector3 p2, float r1, float r2)
+    void UpdateLabel(Vector3 p_pre, Vector3 p_post, float r_pre, float r_post)
     {
-        Vector3 midpoint = (p1 + p2) * 0.5f;
-        midpoint.y += r1 + r2 * 0.6f;
-        nameField.fontSize = r1 + r2 * 15f;
+        Vector3 midpoint = (p_pre + p_post) * 0.5f;
+        midpoint.y += r_pre + r_post * 0.6f;
+        nameField.fontSize = r_pre + r_post * 15f;
         nameField.transform.position = midpoint;
     }
 
-    void UpdateBodySegment(Transform body, Vector3 p1, Vector3 direction, float startLocation, float endLocation, float fullLength, float r1, float r2)
+    // This is a linear interpolation between two given radii. The mesh's original vertices are stored and a copy is created to avoid applying the interpolation to each instance,
+    // keeping it on a per-instance basis. Each of its vertices are looped through, and its x and y coordinates are are adjusted to fit the linear interpolation.
+
+    // UV tiling is also in here... this needs to be hashed out. Maintain aspect ratio. It should just be moved to a new method. 
+    void UpdateBodySegment(Transform body, float startLocation, float endLocation)
     {
-        float segmentLength = (endLocation - startLocation) * fullLength;
+        float segmentLength = (endLocation - startLocation) * _fullLength;
 
         float relativeMidpoint = (startLocation + endLocation) * 0.5f;
-        Vector3 segmentMidpoint = p1 + direction * (relativeMidpoint * fullLength);
+        Vector3 segmentMidpoint = _p_pre + _direction * (relativeMidpoint * _fullLength);
 
         MeshFilter mf = body.GetComponent<MeshFilter>();
         Mesh mesh = mf.mesh;
@@ -186,35 +229,39 @@ public class ArrowUpdate : MonoBehaviour
         {
             Vector3 vertex = originalVertices[i];
 
-            //Map vertex.y from [0,1] to [startLocation, endLocation] (ie, [0, 0.4])
-            //By default, Lerp() interpolates between [0,1].
             float yRange = Mathf.Lerp(startLocation, endLocation, vertex.y);
-            float radiusAtPoint = Mathf.Lerp(r1, r2, yRange);
+            float radiusAtPoint = Mathf.Lerp(_r_pre, _r_post, yRange);
 
-            newVertices[i] = new Vector3(vertex.x * radiusAtPoint, vertex.y, vertex.z * radiusAtPoint);
+            newVertices[i] = new Vector3(
+                vertex.x * radiusAtPoint,
+                vertex.y,
+                vertex.z * radiusAtPoint
+            );
         }
 
         mesh.vertices = newVertices;
+
         body.position = segmentMidpoint;
-        body.up = direction;
+        body.up = _direction;
         body.localScale = new Vector3(1f, segmentLength * 0.5f, 1f);
 
 
-        // This controls the albedos on the assigned textures, meant to maintain the aspect ratio of the synapse models' uvs in particular. 
         Vector2[] uvs = mesh.uv;
 
-        float tileSize = 0.5f;
-
+        float referenceRadius = (_r_pre + _r_post) * 0.5f;
+        const float tileSize = 10f;
+        float tilingY = (segmentLength / referenceRadius) / tileSize;               //longer segment, bigger UV span, more repeats
+        float offsetY = (startLocation * _fullLength / referenceRadius) / tileSize;  //keeps body1/body2 aligned
         for (int i = 0; i < uvs.Length; i++)
         {
-            uvs[i].y = originalVertices[i].y / tileSize;
+            uvs[i].y = originalVertices[i].y * tilingY + offsetY;
         }
 
         mesh.uv = uvs;
 
 
-
     }
+
 
 
     void UpdateDisk(Transform disk, Vector3 position, Vector3 direction, float radius, float length)
@@ -227,7 +274,7 @@ public class ArrowUpdate : MonoBehaviour
 
         //first and last arguments are the x and z coordinates, which are the transversal directions; the y coordinate is the longitudal direction 
         float diskRadius = radius * 3f; //x and z coordinates
-        float diskThickness = length * 0.05f; //y coordinate direction
+        float diskThickness = radius * 1f; //y coordinate direction
 
         //comment
         disk.localScale = new Vector3(diskRadius, diskThickness, diskRadius);
@@ -238,25 +285,27 @@ public class ArrowUpdate : MonoBehaviour
         //Debug.Log(shape.radius);
 
         var main = particleSystem.main;
-        particleSize = radius * 0.5f;
+        particleSize = radius * 0.4f;
         main.startSize = particleSize;
     }
-    void UpdateArrowhead(Vector3 p1, Vector3 direction, float fullLength)
+
+    Vector3 PositionAlongArrow(Vector3 p_pre, Vector3 p_post, float s)
     {
-        float arrowBodyLength = fullLength * 0.8f;
-        float coneLength = fullLength - arrowBodyLength;
+        return Vector3.Lerp(p_pre, p_post, s);
+    }
 
-        float r1 = GetVisualRadius(preSynapse);
-        float r2 = GetVisualRadius(postSynapse);
-        float rShaft = Mathf.Lerp(r1, r2, 0.8f); //the width of the arrowhead is three times the width of the length's shaft
-        float coneWidth = 3f;
 
-        Vector3 arrowBodyEnd = p1 + direction * arrowBodyLength;
-        Vector3 coneMidpoint = arrowBodyEnd + direction * (coneLength * 0.5f);
+    void UpdateArrowhead(float startS, float endS)
+    {
+        float arrowHeadLength = (endS - startS) * _fullLength;
+        float rShaft = Mathf.Lerp(_r_pre, _r_post, startS);
+        float coneWidthMultiplier = 3f;
+        float arrowHeadCenter = 0.5f * (startS + endS);
+        Vector3 arrowHeadMidpoint = _p_pre + _direction * (arrowHeadCenter * _fullLength);
 
-        arrowHead.position = coneMidpoint;
-        arrowHead.up = direction;
-        arrowHead.localScale = new Vector3(rShaft * coneWidth, coneLength * 0.5f, rShaft * coneWidth);
+        arrowHead.position = arrowHeadMidpoint;
+        arrowHead.up = _direction;
+        arrowHead.localScale = new Vector3(rShaft * coneWidthMultiplier, arrowHeadLength * 0.5f, rShaft * coneWidthMultiplier);
     }
 
 
@@ -272,7 +321,7 @@ public class ArrowUpdate : MonoBehaviour
     }
 
 
-    void UpdateParticleSystem()
+    void UpdateParticleSystem(float cleftLength)
     {
 
         if (particleSystem == null || post == null) return;
@@ -282,18 +331,21 @@ public class ArrowUpdate : MonoBehaviour
 
         float iSyn = (float)post.currentIsyn;
         float iMax = (float)post.currentModel.Value.getImax();
-        //Debug.Log(iMax);
-        float vMax = 1f;
+        //This routine calculates the emissions rate as a function of the Isyn
+        float EmMax = 300f; // Constant for emissions rate
+        float EmissionRate = Mathf.Clamp(Mathf.Abs(iSyn) / iMax, 0.0001f, 1f);
+        //Debug.Log("Isyn over Imax: " + Mathf.Abs(iSyn) / iMax);
 
-        float V = Mathf.Clamp(Mathf.Abs(iSyn) / iMax, 0.0001f, 1f) * vMax;
-        float emissionRate = Mathf.Max(0.01f, V);
-        float speed = 0.75f * vMax;
 
+
+        float traversalTime = 0.5f;
+        float currentSpeed = cleftLength/traversalTime;
         if (Mathf.Abs(iSyn) > 0f)
         {
             emissionModule.enabled = true;
-            emissionModule.rateOverTime = emissionRate * 80f;
-            main.startSpeed = speed;
+            emissionModule.rateOverTime = EmissionRate * EmMax;
+            main.startLifetime = traversalTime;
+            main.startSpeed = currentSpeed;
         }
         else
         {
@@ -304,13 +356,13 @@ public class ArrowUpdate : MonoBehaviour
         Color32 liveColor;
         if (iSyn >= 0f)
         {
-            liveColor = Color.red;
+            main.startColor = Color.red;
         }
 
 
         else
         {
-            liveColor = Color.cyan;  
+            main.startColor = Color.cyan;  
         }
     
         //Particle buffer is allocated
@@ -323,31 +375,18 @@ public class ArrowUpdate : MonoBehaviour
         int numParticlesAlive = particleSystem.GetParticles(m_Particles);
 
         //Particles move uniformly on the x-axis, but have an element of randomness to their movement on the y-axis
-        //float jitterStrength = 0.02f;
-
         float target_radius = GetVisualRadius(disk2) * 0.9f; // make bounding cylinder slightly smaller than receiving terminal
-        float jitterStrength = 0.5f * target_radius;
+        float jitterStrength = 0.05f * target_radius;
 
         // Change only the particles that are alive
         for (int i = 0; i < numParticlesAlive; i++)
         {
-            //float xOffset = Random.Range(-jitterStrength, jitterStrength);
-            //float yOffset = Random.Range(-jitterStrength, jitterStrength);
-
-            // Sample offset uniformly from disk of radius jitterStrength
-            //float jitter_r2 = Random.Range(0, Mathf.Pow(jitterStrength,2));
-            //float jitter_phi = Random.Range(-1, 1) * Mathf.PI;
-            //float xOffset = Mathf.Sqrt(jitter_r2) * Mathf.Cos(jitter_phi);
-            //float yOffset = Mathf.Sqrt(jitter_r2) * Mathf.Sin(jitter_phi);
 
             // non uniform in disk
             float jitter_r = Random.Range(0.0f, jitterStrength);
             float jitter_phi = Random.Range(0.0f,2.0f) * Mathf.PI;
             float xOffset = jitter_r * Mathf.Cos(jitter_phi);
             float yOffset = jitter_r * Mathf.Sin(jitter_phi);
-            //Debug.Log("cos: " + Mathf.Cos(jitter_phi) + "sin: "+  Mathf.Sin(jitter_phi));
-            //Debug.Log("dx: " + Mathf.Cos(jitter_phi) + "dy: "+  Mathf.Sin(jitter_phi));
-
 
             //yOffset = jitterStrength; // this is for testing
 
@@ -355,29 +394,22 @@ public class ArrowUpdate : MonoBehaviour
             position.x += xOffset;
             position.y += yOffset;
 
-            //position.y = MathF.Min(position.y,shape.radius)
-            //position.y = Mathf.Min(position.y, 0.088f); // this works in y direction only
-
-
-            //float target_radius = 0.18f; // should be replaced by correct radius of target
             float dist_from_center_line = Mathf.Sqrt(Mathf.Pow(position.x, 2) + Mathf.Pow(position.y, 2))+1.0e-12f;
             float dist_factor = Mathf.Min(target_radius / dist_from_center_line, 1);
             position.x = position.x * dist_factor;
             position.y = position.y * dist_factor;
 
+            m_Particles[i].velocity = m_Particles[i].velocity.normalized * currentSpeed;
 
+            m_Particles[i].remainingLifetime *= cleftLength / previousCleftLength;
 
-            Vector3 direction = m_Particles[i].velocity.normalized;
-
-            m_Particles[i].velocity = direction * speed;
             m_Particles[i].position = position;
             m_Particles[i].startSize = particleSize;
-            m_Particles[i].startColor = liveColor;
         }
 
         //Apply the changes
         particleSystem.SetParticles(m_Particles, numParticlesAlive);
-
+        previousCleftLength = cleftLength;
     }
 
 }
