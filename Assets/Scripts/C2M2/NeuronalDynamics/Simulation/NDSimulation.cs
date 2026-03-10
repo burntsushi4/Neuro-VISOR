@@ -150,6 +150,20 @@ namespace C2M2.NeuronalDynamics.Simulation {
             }
         }
 
+        private void Update()
+        {
+            foreach (NDGraph graph in graphManager.graphs)
+            {
+                if (graph.trackedSynapse != null)
+                {
+                    float iMax = (float)graph.trackedSynapse.currentModel.Value.getImax();
+                    float isynNormalized = (float)(graph.trackedSynapse.currentIsyn / iMax);
+                    graph.ndlinegraph.AddValue((float)(1000 * GetSimulationTime()), isynNormalized);
+                }
+            }
+        }
+
+
         // Stores the information from mapping in an array of structs.
         // Performs much better than using mapping directly.
         private Vert3D1DPair[] map = null;
@@ -311,6 +325,7 @@ namespace C2M2.NeuronalDynamics.Simulation {
             // Update graphs
             foreach(NDGraph graph in graphManager.graphs)
             {
+                if (graph.trackedSynapse == null)
                 graph.ndlinegraph.AddValue(1000*GetSimulationTime(), (float)vals1D[graph.FocusVert] * unitScaler);
             }
 

@@ -37,6 +37,7 @@ public class NDGraph : NDInteractables
             Destroy(this);
         }
         name = "Graph(" + simulation.name + ")[vert" + FocusVert + "]";
+        //reflects whether this is a synapse plot or voltage plot... specify neuron-vert?
 
         GraphManager.graphs.Add(this);
     }

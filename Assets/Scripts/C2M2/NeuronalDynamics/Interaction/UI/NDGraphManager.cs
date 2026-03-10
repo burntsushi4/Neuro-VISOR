@@ -58,5 +58,17 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
             }
             return true;
         }
+        public void OpenSynapseGraph(Synapse synapse)
+        {
+            var synapseManager = GameManager.instance.simulationManager.synapseManager;
+            Synapse postSynapse = synapse;
+            var pairs = synapseManager.FindSynapsePair(synapse);
+            if (pairs != null && pairs.Count > 0)
+                postSynapse = pairs[0].Item2;
+
+            NDGraph newGraph = Instantiate(graphPrefab).GetComponent<NDGraph>();
+            newGraph.trackedSynapse = postSynapse;
+            newGraph.AttachToSimulation(postSynapse.simulation, postSynapse.FocusVert);
+        }
     }
 }

@@ -108,6 +108,11 @@ public class Synapse : NDInteractables
         {
             SynapseManager.SynapticPlacement(this);
         }
+        // Plot synapse
+        else if (GameManager.instance.simulationManager.FeatState == NDSimulationManager.FeatureState.Plot)
+        {
+            simulation.graphManager.OpenSynapseGraph(this);
+        }
         SynapseManager.HoldCount = 0;
     }
 

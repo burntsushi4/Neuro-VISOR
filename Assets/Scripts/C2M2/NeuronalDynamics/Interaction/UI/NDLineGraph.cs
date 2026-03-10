@@ -46,11 +46,21 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
 
             void SetLabels()
             {
-                string title = "Voltage vs. Time (Vert " + ndgraph.FocusVert + ")";
-                string xLabel = "Time (ms)";
-                string yLabel = "Voltage (" + Sim.unit + ")";
-
-                base.SetLabels(title, xLabel, yLabel);
+                if (ndgraph.trackedSynapse != null)
+                {
+                    string modelName = ndgraph.trackedSynapse.currentModel.Value.getModelName();
+                    base.SetLabels(
+                        "Isyn / Imax (" + modelName + ", Vert " + ndgraph.FocusVert + ")",
+                        "Time (ms)",
+                        "Isyn / Imax");
+                }
+                else
+                {
+                    base.SetLabels(
+                        "Voltage vs. Time (Vert " + ndgraph.FocusVert + ")",
+                        "Time (ms)",
+                        "Voltage (" + Sim.unit + ")");
+                }
             }
 
             Vector3 GetPanelPos()
@@ -82,10 +92,17 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
 
         public override void AddValue(float x, float y)
         {
-            YMin = Sim.ColorLUT.GlobalMin * Sim.unitScaler;
-            YMax = Sim.ColorLUT.GlobalMax * Sim.unitScaler;
+            if (ndgraph.trackedSynapse != null)
+            {
+                YMin = -1f;
+                YMax = 1f;
+            }
+            else
+            {
+                YMin = Sim.ColorLUT.GlobalMin * Sim.unitScaler;
+                YMax = Sim.ColorLUT.GlobalMax * Sim.unitScaler;
+            }
 
-            // Add point to graph
             base.AddValue(x, y);
         }
 
