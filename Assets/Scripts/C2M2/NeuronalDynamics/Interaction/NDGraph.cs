@@ -11,6 +11,7 @@ public class NDGraph : NDInteractables
 
     //if set, this graph plots synapse current instead of the other plot
     public Synapse trackedSynapse = null;
+    public Vector3 pointerTarget = Vector3.zero; // for syn
     // Start is called before the first frame update
     void Awake()
     {

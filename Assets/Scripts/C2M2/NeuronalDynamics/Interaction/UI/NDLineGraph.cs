@@ -110,7 +110,10 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
         {
             if (pointerLines != null)
             {
-                pointerLines.targetPos = VertPos;
+                if (ndgraph.pointerTarget != Vector3.zero)
+                    pointerLines.targetPos = ndgraph.pointerTarget;
+                else
+                    pointerLines.targetPos = VertPos;
             }
         }
         

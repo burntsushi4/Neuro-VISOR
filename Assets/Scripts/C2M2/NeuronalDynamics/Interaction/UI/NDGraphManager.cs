@@ -58,7 +58,7 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
             }
             return true;
         }
-        public void OpenSynapseGraph(Synapse synapse)
+        public NDGraph OpenSynapseGraph(Synapse synapse)
         {
             var synapseManager = GameManager.instance.simulationManager.synapseManager;
             Synapse postSynapse = synapse;
@@ -69,6 +69,7 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
             NDGraph newGraph = Instantiate(graphPrefab).GetComponent<NDGraph>();
             newGraph.trackedSynapse = postSynapse;
             newGraph.AttachToSimulation(postSynapse.simulation, postSynapse.FocusVert);
+            return newGraph;
         }
     }
 }

@@ -1,5 +1,9 @@
 ﻿using UnityEngine;
 using TMPro;
+using C2M2.NeuronalDynamics.Simulation;
+using C2M2;
+using C2M2.Interaction;
+
 public class ArrowUpdate : MonoBehaviour
 {
     public Transform preSynapse;
@@ -42,6 +46,8 @@ public class ArrowUpdate : MonoBehaviour
     float _r_pre;
     float _r_post;
 
+    private Vector3 _lengthMidpoint;
+    private RaycastPressEvents hitEvent;
 
 
     //TODO: rename body to shaft?
@@ -56,6 +62,11 @@ public class ArrowUpdate : MonoBehaviour
         meshFilter.mesh = originalMesh;
 
         SetGlobalMode(globalMode);
+        foreach (RaycastPressEvents pressEvents in GetComponentsInChildren<RaycastPressEvents>(true))
+        {
+            Debug.Log("Found RaycastPressEvents on: " + pressEvents.gameObject.name);
+            pressEvents.OnEndPress.AddListener((hit) => CheckInput());
+        }
     }
 
 
@@ -136,6 +147,14 @@ public class ArrowUpdate : MonoBehaviour
 
         UpdateMaterial();
         UpdateLabel(p_pre, p_post, r_pre, r_post);
+
+
+        _lengthMidpoint = PositionAlongArrow(p_pre, p_post, 0.5f);
+        foreach (NDGraph graph in post.simulation.graphManager.graphs)
+        {
+            if (graph.trackedSynapse == post)
+                graph.pointerTarget = _lengthMidpoint;
+        }
     }
 
     public void SetMode(VisualMode newMode)
@@ -244,7 +263,9 @@ public class ArrowUpdate : MonoBehaviour
         body.position = segmentMidpoint;
         body.up = _direction;
         body.localScale = new Vector3(1f, segmentLength * 0.5f, 1f);
-
+        BoxCollider col = body.GetComponent<BoxCollider>();
+        mesh.RecalculateBounds();
+        col.size = new Vector3(mesh.bounds.size.x, 2f, mesh.bounds.size.z);
 
         Vector2[] uvs = mesh.uv;
 
@@ -411,6 +432,15 @@ public class ArrowUpdate : MonoBehaviour
         particleSystem.SetParticles(m_Particles, numParticlesAlive);
         previousCleftLength = cleftLength;
     }
-
+    private void CheckInput()
+    {
+        Debug.Log("Arrow CheckInput called, FeatState: " + GameManager.instance.simulationManager.FeatState);
+        if (GameManager.instance.simulationManager.FeatState == NDSimulationManager.FeatureState.Plot)
+        {
+            NDGraph newGraph = post.simulation.graphManager.OpenSynapseGraph(post);
+            newGraph.transform.position = _lengthMidpoint;
+            newGraph.pointerTarget = _lengthMidpoint;
+        }
+    }
 }
 
