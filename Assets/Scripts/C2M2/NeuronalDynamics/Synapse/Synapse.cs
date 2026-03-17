@@ -90,15 +90,12 @@ public class Synapse : NDInteractables
         // Change model 
         if (SynapseManager.HoldCount >= SynapseManager.ChangeCount && SynapseManager.HoldCount <= SynapseManager.DestroyCount)
         {
-            //Implements the circularly linked list 
-            if (currentModel.Value.Equals(modelList.Last.Value)) {
-                SynapseManager.ChangeModel(SynapseManager.FindSelectedSyn(this), modelList.First.Value);
-                currentModel = modelList.First;     //Resets to the first model in the linked list
-            }
-            else {
-                SynapseManager.ChangeModel(SynapseManager.FindSelectedSyn(this), currentModel.Next.Value);
-                currentModel = currentModel.Next;   //Iterates through the linked list
-            }
+            ISynapseModel next;
+            if (currentModel.Next == null)
+                next = modelList.First.Value;
+            else
+                next = currentModel.Next.Value;
+            SynapseManager.ChangeModel(this, next);
             Debug.Log("Current Model: " + currentModel.Value);
         }
         // Delete synapse
