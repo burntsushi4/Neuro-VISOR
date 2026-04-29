@@ -1388,7 +1388,7 @@ public class OVRManager : MonoBehaviour
 	public static XRDisplaySubsystem GetCurrentDisplaySubsystem()
 	{
 		List<XRDisplaySubsystem> displaySubsystems = new List<XRDisplaySubsystem>();
-		SubsystemManager.GetInstances(displaySubsystems);
+		SubsystemManager.GetSubsystems(displaySubsystems);
 		//Note: Here we are making the assumption that there will always be one valid display subsystem. If there is not, then submitFrame isn't being called,
 		//so for now this is a fine assumption to make.
 		if (displaySubsystems.Count > 0)
