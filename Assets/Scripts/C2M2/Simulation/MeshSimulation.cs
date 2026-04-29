@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using C2M2.Visualization;
 using System;
-
+using UnityEngine.XR;
 namespace C2M2.Simulation
 {
     using Utils;
@@ -163,7 +163,8 @@ namespace C2M2.Simulation
                 if (GameManager.instance.vrDeviceManager.VRActive)
                 {
                     // Uses the value of both joysticks added together
-                    float scaler = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick).y + OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick).y;
+                    float scaler = GetXRVector2(XRNode.LeftHand, CommonUsages.primary2DAxis).y +
+                                GetXRVector2(XRNode.RightHand, CommonUsages.primary2DAxis).y;
 
                     return ThumbstickScaler * scaler;
                 }
@@ -184,6 +185,15 @@ namespace C2M2.Simulation
         public void ResetRaycastHits()
         {
             raycastHits = new (int, double)[0];
+        }
+        private Vector2 GetXRVector2(XRNode node, InputFeatureUsage<Vector2> usage)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+            if (device.isValid && device.TryGetFeatureValue(usage, out Vector2 value))
+                return value;
+
+            return Vector2.zero;
         }
     }
 }

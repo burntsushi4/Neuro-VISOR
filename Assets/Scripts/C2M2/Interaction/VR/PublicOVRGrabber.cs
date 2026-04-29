@@ -11,9 +11,16 @@ namespace C2M2.Interaction.VR
     /// This allows you to change the user's grab colliders at runtime
     /// </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    public class PublicOVRGrabber : OVRGrabber
+    public class PublicOVRGrabber : MonoBehaviour
     {
-        public Collider[] M_GrabVolumes { get { return m_grabVolumes; } set { m_grabVolumes = value; } }
-        public OVRInput.Controller Controller { get { return m_controller; } }
+        [SerializeField]
+        private Collider[] m_grabVolumes;
+
+        public Collider[] M_GrabVolumes
+        {
+            get { return m_grabVolumes; }
+            set { m_grabVolumes = value; }
+        }
+        public UnityEngine.XR.XRNode ControllerNode = UnityEngine.XR.XRNode.RightHand;
     }
 }

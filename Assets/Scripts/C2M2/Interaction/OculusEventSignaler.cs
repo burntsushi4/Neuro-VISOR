@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.XR;
 
 namespace C2M2.Interaction
 {
@@ -10,15 +11,16 @@ namespace C2M2.Interaction
     /// </summary>
     public class OculusEventSignaler : RaycastEventSignaler
     {
-        [Tooltip("The Oculus controller being raycasted from")]
-        public OVRInput.Controller controller = OVRInput.Controller.RTouch;
+        [Tooltip("The XR hand/controller being raycasted from")]
+        public XRNode controllerNode = XRNode.RightHand;
+
         [Tooltip("Button to activate raycasting mode")]
-        public OVRInput.Button beginRaycastingButton = OVRInput.Button.One;
+        public InputFeatureUsage<bool> beginRaycastingButton = CommonUsages.primaryButton;
         [Tooltip("If Toggle Mode is enabled, pressing Begin Raycasting Button will toggle raycasting mode on. Otherwise Begin Raycasting Button needs to be held down to enter raycasting mode.")]
         public bool toggleMode = true;
         [Tooltip("Button to invoke hit/hold events from a distance")]
-        public OVRInput.Button triggerEventsButton = OVRInput.Button.PrimaryIndexTrigger;
-        public OVRGrabber grabber = null;
+        public InputFeatureUsage<bool> triggerEventsButton = CommonUsages.triggerButton;
+        public UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInteractor interactor = null;
         [Tooltip("Line renderer for visually mimicking raycast vector")]
         public LineRenderer lineRend;
         [Tooltip("Line renderer default color")]
@@ -28,14 +30,14 @@ namespace C2M2.Interaction
 
         public Transform localAvatar;
         public bool isLeftHand = false;
-
+        private bool previousBeginRaycastingButtonState = false;
         private bool toggled = false;
         private bool Toggled
         {
             get
             {
                 // If the raycasting button was pressed for the first time this frame, enable/disable raycasting
-                if (OVRInput.GetDown(beginRaycastingButton, controller))
+                if (GetXRButtonDown(controllerNode, beginRaycastingButton))
                 {
                     toggled = !toggled;
                 }
@@ -48,9 +50,9 @@ namespace C2M2.Interaction
             lineRend = gameObject.GetComponentInChildren<LineRenderer>();
             if (lineRend == null) { Debug.LogWarning("Couldn't find line renderer in RaycastForward"); }
 
-            if(grabber == null)
+            if (interactor == null)
             {
-                grabber = GetComponentInParent<OVRGrabber>();
+                interactor = GetComponentInParent<UnityEngine.XR.Interaction.Toolkit.Interactors.XRBaseInteractor>();
             }
         }
         protected override void OnStart()
@@ -64,10 +66,10 @@ namespace C2M2.Interaction
         {
             // If we are in toggle mode, is raycasting mode toggled on?
             // Otherwise, is the Begin Raycasting Button currently being pressed down?
-            bool rURaycasting = toggleMode ? Toggled : OVRInput.Get(beginRaycastingButton, controller);
+            bool rURaycasting = toggleMode ? Toggled : GetXRButton(controllerNode, beginRaycastingButton);
 
             // If an object is being actively grabbed, don't raycast
-            if (grabber != null && grabber.grabbedObject != null)
+            if (interactor != null && interactor.hasSelection)
                 rURaycasting = false;
 
             StaticHandSetActive(rURaycasting);
@@ -77,7 +79,7 @@ namespace C2M2.Interaction
         }
         private bool distancePressed = false;
         /// <returns> True if the specified controller button is pressed OR if we are near enough to the raycast target </returns>
-        protected override bool PressCondition() => (OVRInput.Get(triggerEventsButton, controller) || distancePressed);
+        protected override bool PressCondition() => GetXRButton(controllerNode, triggerEventsButton) || distancePressed;
 
         // At the start of a click change the line renderer color to pressed color
         protected override void OnPressBegin()
@@ -171,6 +173,25 @@ namespace C2M2.Interaction
             }
 
             if (defaultHand == null) Debug.LogError("No hand found!");
+        }
+        private bool GetXRButton(XRNode node, InputFeatureUsage<bool> usage)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+            if (device.isValid && device.TryGetFeatureValue(usage, out bool value))
+                return value;
+
+            return false;
+        }
+
+        private bool GetXRButtonDown(XRNode node, InputFeatureUsage<bool> usage)
+        {
+            bool currentState = GetXRButton(node, usage);
+
+            bool pressedThisFrame = currentState && !previousBeginRaycastingButtonState;
+            previousBeginRaycastingButtonState = currentState;
+
+            return pressedThisFrame;
         }
     }
 }

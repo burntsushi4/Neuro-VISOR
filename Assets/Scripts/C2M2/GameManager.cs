@@ -85,9 +85,9 @@ namespace C2M2
         public Vector3 objScaleMin = new Vector3(0.3f, 0.3f, 0.3f);
 
         [Header("OVR Player Controller")]
-        public GameObject ovrRightHandAnchor = null;
-        public GameObject ovrLeftHandAnchor = null;
-        public OVRPlayerController ovrPlayerController { get; set; } = null;
+        public GameObject xrRightHandAnchor = null;
+        public GameObject xrLeftHandAnchor = null;
+        public GameObject xrOrigin { get; set; } = null;
         public GameObject nonVRCamera { get; set; } = null;
 
         [Header("FPS Counter")]

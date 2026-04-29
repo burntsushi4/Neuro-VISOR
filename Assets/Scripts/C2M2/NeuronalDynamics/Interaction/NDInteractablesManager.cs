@@ -3,6 +3,7 @@ using C2M2.Interaction;
 using C2M2.NeuronalDynamics.Simulation;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR;
 
 public abstract class NDInteractablesManager<T> : MonoBehaviour
     where T:NDInteractables
@@ -38,14 +39,15 @@ public abstract class NDInteractablesManager<T> : MonoBehaviour
     /// <summary>
     /// Pressing these buttons allows interaction with the interactable
     /// </summary>
-    public OVRInput.Button interactOVR = OVRInput.Button.PrimaryIndexTrigger;
-    public OVRInput.Button interactOVRS = OVRInput.Button.SecondaryIndexTrigger;
+   // public OVRInput.Button interactOVR = OVRInput.Button.PrimaryIndexTrigger;
+    //public OVRInput.Button interactOVRS = OVRInput.Button.SecondaryIndexTrigger;
     public bool InteractHold
     {
         get
         {
             if (GameManager.instance.vrDeviceManager.VRActive)
-                return OVRInput.Get(interactOVR) || OVRInput.Get(interactOVRS);
+                return GetXRButton(XRNode.LeftHand, CommonUsages.triggerButton) ||
+                    GetXRButton(XRNode.RightHand, CommonUsages.triggerButton);
             else return true;
         }
     }
@@ -59,7 +61,8 @@ public abstract class NDInteractablesManager<T> : MonoBehaviour
             if (GameManager.instance.vrDeviceManager.VRActive)
             {
                 // Uses the value of both joysticks added together
-                float scaler = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick).y + OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick).y;
+                    float scaler = GetXRVector2(XRNode.LeftHand, CommonUsages.primary2DAxis).y +
+                                GetXRVector2(XRNode.RightHand, CommonUsages.primary2DAxis).y;
 
                 return scaler;
             }
@@ -72,14 +75,15 @@ public abstract class NDInteractablesManager<T> : MonoBehaviour
         }
     }
 
-    public OVRInput.Button highlightOVR = OVRInput.Button.PrimaryHandTrigger;
-    public OVRInput.Button highlightOVRS = OVRInput.Button.SecondaryHandTrigger;
+    //public OVRInput.Button highlightOVR = OVRInput.Button.PrimaryHandTrigger;
+    //public OVRInput.Button highlightOVRS = OVRInput.Button.SecondaryHandTrigger;
     public bool HighLightHold
     {
         get
         {
             if (GameManager.instance.vrDeviceManager.VRActive)
-                return OVRInput.Get(highlightOVR) || OVRInput.Get(highlightOVRS);
+                return GetXRButton(XRNode.LeftHand, CommonUsages.gripButton) ||
+                    GetXRButton(XRNode.RightHand, CommonUsages.gripButton);
             else return false; // We cannot highlight through the emulator
         }
     }
@@ -154,6 +158,26 @@ public abstract class NDInteractablesManager<T> : MonoBehaviour
             Destroy(preview.gameObject);
             preview = null;
         }
+    }
+
+    private bool GetXRButton(XRNode node, InputFeatureUsage<bool> usage)
+    {
+        InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+        if (device.isValid && device.TryGetFeatureValue(usage, out bool value))
+            return value;
+
+        return false;
+    }
+
+    private Vector2 GetXRVector2(XRNode node, InputFeatureUsage<Vector2> usage)
+    {
+        InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+        if (device.isValid && device.TryGetFeatureValue(usage, out Vector2 value))
+            return value;
+
+        return Vector2.zero;
     }
 
     #endregion

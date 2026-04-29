@@ -1,16 +1,16 @@
 ﻿using UnityEngine;
-
+using UnityEngine.XR;
 namespace C2M2.Utils
 {
     public class QuitGame : MonoBehaviour
     {
         public KeyCode quitKey = KeyCode.Escape;
-        public OVRInput.Button quitButton = OVRInput.Button.Start;
-        private bool OculusRequested
+        //public XRNode quitHand = XRNode.LeftHand; unused
+        private bool XRRequested
         {
             get
             {
-                return OVRInput.Get(quitButton, OVRInput.Controller.LTouch) || OVRInput.Get(quitButton, OVRInput.Controller.RTouch);
+                return GetXRButton(XRNode.LeftHand, CommonUsages.menuButton) || GetXRButton(XRNode.RightHand, CommonUsages.menuButton);
             }
         }
         private bool QuitRequested
@@ -18,9 +18,19 @@ namespace C2M2.Utils
             get
             {
                 return GameManager.instance.vrDeviceManager.VRActive ?
-                    (OculusRequested || Input.GetKey(quitKey))
+                    (XRRequested || Input.GetKey(quitKey))
                     : Input.GetKey(quitKey);
             }
+        }
+
+        private bool GetXRButton(XRNode node, InputFeatureUsage<bool> usage)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+            if (device.isValid && device.TryGetFeatureValue(usage, out bool value))
+                return value;
+
+            return false;
         }
 
         [Tooltip("If true, game will quit after X frames.")]

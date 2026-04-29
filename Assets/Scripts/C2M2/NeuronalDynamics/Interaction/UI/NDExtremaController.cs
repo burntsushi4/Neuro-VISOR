@@ -4,6 +4,7 @@ using UnityEngine;
 using C2M2.Utils;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.XR;
 namespace C2M2.NeuronalDynamics.Interaction.UI
 {
     [RequireComponent(typeof(BoxCollider))]
@@ -97,8 +98,8 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
             }
         }
 
-        public OVRInput.Axis2D thumbstickP = OVRInput.Axis2D.PrimaryThumbstick;
-        public OVRInput.Axis2D thumbstickS = OVRInput.Axis2D.SecondaryThumbstick;
+        //public OVRInput.Axis2D thumbstickP = OVRInput.Axis2D.PrimaryThumbstick;
+        //public OVRInput.Axis2D thumbstickS = OVRInput.Axis2D.SecondaryThumbstick;
         public KeyCode incKey = KeyCode.UpArrow;
         public KeyCode decKey = KeyCode.DownArrow;
         public float PowerModifier
@@ -106,7 +107,9 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
             get
             {
                 // Uses the value of both joysticks added together
-                if (GameManager.instance.vrDeviceManager.VRActive) return OVRInput.Get(thumbstickP).y + OVRInput.Get(thumbstickS).y;
+                if (GameManager.instance.vrDeviceManager.VRActive)
+                    return GetXRVector2(XRNode.LeftHand, CommonUsages.primary2DAxis).y +
+                        GetXRVector2(XRNode.RightHand, CommonUsages.primary2DAxis).y;
                 else if (Input.GetKey(incKey)) return 1;
                 else if (Input.GetKey(decKey)) return -1;
                 else return 0f;
@@ -300,6 +303,15 @@ namespace C2M2.NeuronalDynamics.Interaction.UI
         private void ChangeLabelCol(Color col)
         {
             Label.color = col;
+        }
+        private Vector2 GetXRVector2(XRNode node, InputFeatureUsage<Vector2> usage)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+            if (device.isValid && device.TryGetFeatureValue(usage, out Vector2 value))
+                return value;
+
+            return Vector2.zero;
         }
     }
 }

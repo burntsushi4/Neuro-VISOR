@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.XR;
 namespace C2M2.Visualization {
     public class LineGraphEditor : MonoBehaviour
     {
@@ -95,7 +96,8 @@ namespace C2M2.Visualization {
             get 
             {
                 if (GameManager.instance.VRActive)
-                    return OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick).y + OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick).y;
+                    return GetXRVector2(XRNode.LeftHand, CommonUsages.primary2DAxis).y +
+                        GetXRVector2(XRNode.RightHand, CommonUsages.primary2DAxis).y;
                 else if (Input.GetKey(KeyCode.UpArrow)) return 1f;
                 else if (Input.GetKey(KeyCode.DownArrow)) return -1f;
                 else return 0;
@@ -113,5 +115,14 @@ namespace C2M2.Visualization {
 
         public void DefaultCol(Image img) => img.color = cellBackgroundCol;
         public void HighlightCol(Image img) => img.color = highlightCol;
+        private Vector2 GetXRVector2(XRNode node, InputFeatureUsage<Vector2> usage)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+            if (device.isValid && device.TryGetFeatureValue(usage, out Vector2 value))
+                return value;
+
+            return Vector2.zero;
+        }
     }
 }

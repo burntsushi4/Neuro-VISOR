@@ -32,9 +32,8 @@ namespace C2M2.Interaction.VR
             vrCameras = vrController.GetComponentsInChildren<Camera>();
             desktopCamera = desktopController.GetComponent<Camera>();
 
+            SwitchState(true);
             CheckForVRDevice();
-
-            SwitchState(VRDevicePresent);
         }
 
         public void Update()

@@ -2,6 +2,7 @@
 
 using UnityEngine;
 using System;
+using UnityEngine.XR;
 namespace C2M2.Interaction
 {
     [Obsolete("Replace by OculusEventSignaler")]
@@ -24,11 +25,11 @@ namespace C2M2.Interaction
         #region Public_Members
         [Header("Raycasting Information")]
         [Tooltip("The Oculus controller being raycasted from")]
-        public OVRInput.Controller raycastController = OVRInput.Controller.RTouch;
+        public XRNode raycastController = XRNode.RightHand;
         [Tooltip("Button to activate raycasting mode")]
-        public OVRInput.Button raycastButton = OVRInput.Button.One;
+        public InputFeatureUsage<bool> raycastButton = CommonUsages.primaryButton;
         [Tooltip("Button to invoke hit/hold events from a distance")]
-        public OVRInput.Button triggerButton = OVRInput.Button.PrimaryIndexTrigger;
+        public InputFeatureUsage<bool> triggerButton = CommonUsages.triggerButton;
         [Tooltip("Layers that raycast pays attention to")]
         public LayerMask layerMask;
         [Tooltip("The renderer component for the static pointed hand ")]
@@ -85,7 +86,7 @@ namespace C2M2.Interaction
             if (!mouseMode)
             {
                 // Resolve which controller we are using. Left hand will be default
-                rightHand = (raycastController.Equals(OVRInput.Controller.RTouch) || gameObject.name.Contains("right")) ? true : false;
+                rightHand = (raycastController == XRNode.RightHand || gameObject.name.ToLower().Contains("right"));
                 // Get the renderer of the static pointed finger and disable it initially
                 // staticIndexRenderer = staticHandObject.GetComponent<MeshRenderer>();        
                 // Disable the static hand if we can find it
@@ -110,7 +111,7 @@ namespace C2M2.Interaction
         private void TryRaycastHit()
         {
             // If the user enables "raycast mode" by VR controller or by mouse
-            bool raycastActive = OVRInput.Get(raycastButton, raycastController) || (mouseMode && Input.GetMouseButton(0));
+            bool raycastActive = GetXRButton(raycastController, raycastButton) || (mouseMode && Input.GetMouseButton(0));
             if (raycastActive)
             {
                 // Resolve raycast hit info for VR or mouse controller
@@ -227,7 +228,7 @@ namespace C2M2.Interaction
             {
                 bool buttonPressed = false;
                 if (mouseMode) buttonPressed = true;
-                else if (OVRInput.Get(triggerButton, raycastController)) buttonPressed = true;
+                else if (GetXRButton(raycastController, triggerButton)) buttonPressed = true;
                 if (buttonPressed)
                 { // If we are holding down the relevant button
                     if (!clicked)
@@ -321,19 +322,19 @@ namespace C2M2.Interaction
                         { // Set the appropriate color and controller vibration
                             case StateCode.NULL:
                                 LineRendSetEndpointColors(nullCol);
-                                OVRInput.SetControllerVibration(hapFreq, nullAmp, raycastController);
+                                SetXRHaptics(raycastController, nullAmp);
                                 break;
                             case StateCode.HOLD:
                                 LineRendSetEndpointColors(holdCol);
-                                OVRInput.SetControllerVibration(hapFreq, holdAmp, raycastController);
+                                SetXRHaptics(raycastController, holdAmp);
                                 break;
                             case StateCode.HIT:
                                 LineRendSetEndpointColors(hitCol);
-                                OVRInput.SetControllerVibration(hapFreq, hitAmp, raycastController);
+                                SetXRHaptics(raycastController, hitAmp);
                                 break;
                             case StateCode.END:
                                 LineRendSetEndpointColors(endCol);
-                                OVRInput.SetControllerVibration(hapFreq, endAmp, raycastController);
+                                SetXRHaptics(raycastController, endAmp);
                                 break;
                         }
                     }
@@ -370,6 +371,25 @@ namespace C2M2.Interaction
                 }
             }
             #endregion
+        }
+        private bool GetXRButton(XRNode node, InputFeatureUsage<bool> usage)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+            if (device.isValid && device.TryGetFeatureValue(usage, out bool value))
+                return value;
+
+            return false;
+        }
+
+        private void SetXRHaptics(XRNode node, float amplitude)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+            if (device.isValid && device.TryGetHapticCapabilities(out HapticCapabilities capabilities) && capabilities.supportsImpulse)
+            {
+                device.SendHapticImpulse(0u, amplitude, 0.1f);
+            }
         }
     }
 }

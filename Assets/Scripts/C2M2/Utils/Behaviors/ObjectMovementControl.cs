@@ -1,14 +1,15 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.XR;
 
 namespace C2M2.Utils
 {
-    [RequireComponent(typeof(OVRGrabbable))]
+    [RequireComponent(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable))]
     public class ObjectMovementControl : MonoBehaviour
     {
-        private OVRGrabbable grabbable = null;
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabbable = null;
 
-        public OVRInput.Button resetButton = OVRInput.Button.Start;
+        public XRNode resetHand = XRNode.LeftHand;
         public KeyCode resetKey = KeyCode.X;
         public Vector3 resetPosition = Vector3.zero;
         public Vector3 resetRotation = Vector3.zero;
@@ -43,7 +44,7 @@ namespace C2M2.Utils
             {
                 if (GameManager.instance.vrDeviceManager.VRActive)
                 {
-                    return OVRInput.Get(resetButton) && grabbable.isGrabbed;
+                    return GetXRButton(resetHand, CommonUsages.menuButton) && grabbable.isSelected;
                 }
                 else
                 {
@@ -70,9 +71,19 @@ namespace C2M2.Utils
             }
         }
 
+        private bool GetXRButton(XRNode node, InputFeatureUsage<bool> usage)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+            if (device.isValid && device.TryGetFeatureValue(usage, out bool value))
+                return value;
+
+            return false;
+        }
+
         private void Start()
         {
-            grabbable = GetComponent<OVRGrabbable>();
+            grabbable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
             resetPosition = transform.position;
             resetRotation = transform.eulerAngles;
         }

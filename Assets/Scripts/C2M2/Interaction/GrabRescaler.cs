@@ -7,16 +7,19 @@ using C2M2.NeuronalDynamics.Interaction;
 using System.Collections.Generic;
 using System.Linq;
 using C2M2.NeuronalDynamics.Simulation;
+using UnityEngine.XR;
 
 namespace C2M2.Interaction
 {
     /// <summary>
     /// Controls the scaling of a transform
     /// </summary>
-    [RequireComponent(typeof(OVRGrabbable))]
+    [RequireComponent(typeof(UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable))]
     public class GrabRescaler : MonoBehaviour
     {
-        private OVRGrabbable grabbable = null;
+        private bool previousXRVisibilityButtonState = false;
+
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabbable = null;
         private MeshRenderer meshrender = null;
         private SphereCollider pivotcollider = null;
         private Vector3 origScale;
@@ -29,7 +32,7 @@ namespace C2M2.Interaction
         public bool xScale = true;
         public bool yScale = true;
         public bool zScale = true;
-        public OVRInput.RawButton LeftX = OVRInput.RawButton.X;
+        public XRNode visibilityToggleHand = XRNode.LeftHand;
         public KeyCode incKey = KeyCode.UpArrow;
         public KeyCode decKey = KeyCode.DownArrow;
         public KeyCode visibilityToggleKey = KeyCode.R;
@@ -53,7 +56,7 @@ namespace C2M2.Interaction
         /// </summary>
         private bool IsGrabbed
         {
-            get { return grabbable.isGrabbed || isDesktopGrabbed; }
+            get { return grabbable.isSelected || isDesktopGrabbed; }
         }
 
         private float ChangeScaler
@@ -61,7 +64,9 @@ namespace C2M2.Interaction
             get
             {
                 ///<returns>A float between -1 and 1, where -1 means the thumbstick y axis is completely down and 1 implies it is all the way up</returns>
-                if (GameManager.instance.vrDeviceManager.VRActive) return (OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick).y + OVRInput.Get(OVRInput.Axis2D.SecondaryThumbstick).y);
+                if (GameManager.instance.vrDeviceManager.VRActive)
+                    return GetXRVector2(XRNode.LeftHand, CommonUsages.primary2DAxis).y +
+                        GetXRVector2(XRNode.RightHand, CommonUsages.primary2DAxis).y;
                 else if (Input.GetKey(incKey) && !Input.GetKey(decKey)) return 1f;
                 else if (Input.GetKey(decKey) && !Input.GetKey(incKey)) return -1f;
                 return 0;
@@ -73,7 +78,7 @@ namespace C2M2.Interaction
         {
             if (GameManager.instance.vrDeviceManager.VRActive)
             {
-                if (OVRInput.GetDown(LeftX) && !OVRInput.Get(OVRInput.RawButton.Y))
+                if (GetXRButtonDown(visibilityToggleHand, CommonUsages.primaryButton) && !GetXRButton(visibilityToggleHand, CommonUsages.secondaryButton))
                 {
                     meshrender.enabled = !meshrender.enabled;
                     pivotcollider.enabled = !pivotcollider.enabled;
@@ -112,7 +117,7 @@ namespace C2M2.Interaction
             target = GameManager.instance.simulationSpace.transform;
 
             // Get relevant components to toggle visibility, grabbability, and object colliders
-            grabbable = GetComponent<OVRGrabbable>();
+            grabbable = GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
             meshrender = GetComponent<MeshRenderer>();
             pivotcollider = GetComponent<SphereCollider>();
 
@@ -127,6 +132,35 @@ namespace C2M2.Interaction
             else maxScale = maxPercentage * origScale;
         }
 
+        private bool GetXRButton(XRNode node, InputFeatureUsage<bool> usage)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+            if (device.isValid && device.TryGetFeatureValue(usage, out bool value))
+                return value;
+
+            return false;
+        }
+
+        private bool GetXRButtonDown(XRNode node, InputFeatureUsage<bool> usage)
+        {
+            bool currentState = GetXRButton(node, usage);
+
+            bool pressedThisFrame = currentState && !previousXRVisibilityButtonState;
+            previousXRVisibilityButtonState = currentState;
+
+            return pressedThisFrame;
+        }
+
+        private Vector2 GetXRVector2(XRNode node, InputFeatureUsage<Vector2> usage)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+
+            if (device.isValid && device.TryGetFeatureValue(usage, out Vector2 value))
+                return value;
+
+            return Vector2.zero;
+        }
         void Update()
         {
             // Store all loaded Neurons in the simulation into a list

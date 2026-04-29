@@ -11,7 +11,7 @@ namespace C2M2.Utils.DebugUtils
 
         private void Update()
         {
-            if (OVRInput.GetDown(OVRInput.Button.Two))
+            if (Input.GetKeyDown(KeyCode.Space))
             {
                 Debug.Log("Spacebar was pressed");
                 Debug.Log("Name: " + AssetDatabase.GetAssetPath(mat));

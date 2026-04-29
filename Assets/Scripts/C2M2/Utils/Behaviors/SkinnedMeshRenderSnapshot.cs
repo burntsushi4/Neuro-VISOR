@@ -47,7 +47,7 @@ namespace C2M2.Utils.DebugUtils
 
         void Update()
         {
-            if (OVRInput.GetDown(OVRInput.Button.Four))
+            if (Input.GetKeyDown(key))
             {
                 Debug.Log("Saving snapshot...");
                 //Save the mesh

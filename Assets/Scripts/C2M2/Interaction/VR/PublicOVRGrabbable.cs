@@ -12,9 +12,19 @@ namespace C2M2.Interaction.VR
     /// This is used so that we can produce a NonConvexMeshCollider and set its colliders as grab points at runtime
     /// </remarks>
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    public class PublicOVRGrabbable : OVRGrabbable
+    /// 
+    /// 
+    /// REVISIT THIS!!
+    public class PublicOVRGrabbable : MonoBehaviour
     {
-        public Collider[] M_GrabPoints { get { return m_grabPoints; } set { m_grabPoints = value; } }
+        [SerializeField]
+        private Collider[] m_grabPoints;
+
+        public Collider[] M_GrabPoints
+        {
+            get { return m_grabPoints; }
+            set { m_grabPoints = value; }
+        }
     }
 
     public class GrabbableNotFoundException : Exception
