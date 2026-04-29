@@ -93,7 +93,7 @@ namespace C2M2.NeuronalDynamics.Interaction
                     if (ErrorWindow != null)
                     {
                         ErrorWindow.SetActive(true);
-                        var go = ErrorWindow.transform.FindChildRecursive("FileName");
+                        var go = FindChildRecursive(ErrorWindow.transform, "FileName");
                         if (go != null)
                         {
                             TMPro.TextMeshProUGUI errorMsg = go.GetComponent<TMPro.TextMeshProUGUI>();
@@ -372,7 +372,21 @@ namespace C2M2.NeuronalDynamics.Interaction
                 generateCellPreviewer();
 
             }
+        // previously was in OVR package
+        private Transform FindChildRecursive(Transform parent, string name)
+        {
+            foreach (Transform child in parent)
+            {
+                if (child.name.Contains(name))
+                    return child;
 
+                var result = FindChildRecursive(child, name);
+                if (result != null)
+                    return result;
+            }
+
+            return null;
+        }
 
         }
 

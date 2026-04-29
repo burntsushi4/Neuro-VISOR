@@ -12,21 +12,26 @@ namespace C2M2.Interaction
         protected override void OnAwake()
         {
             grabTransform = new GameObject().transform;
-            // Name grabber object
+            // Name grabber object and initialize it 
             grabTransform.name = "EmulatorGrab";
+            grabTransform.position = Vector3.zero;
+            grabTransform.rotation = Quaternion.identity;
+            grabTransform.localScale = Vector3.one;
 
             // Create grab collider
             grabVolume = grabTransform.gameObject.AddComponent<SphereCollider>();
             grabVolume.radius = 0.1f;
             grabVolume.isTrigger = true;
 
-            // Create OVRGrabber
-            grabber = grabTransform.gameObject.AddComponent<PublicOVRGrabber>();
-            grabber.M_GrabVolumes = new Collider[] { grabVolume };
-
-            Rigidbody rb = grabTransform.GetComponent<Rigidbody>() ?? grabTransform.gameObject.AddComponent<Rigidbody>();
+            // Create Rigidbody first
+            Rigidbody rb = grabTransform.gameObject.AddComponent<Rigidbody>();
             rb.useGravity = false;
             rb.isKinematic = true;
+
+            // Create grabber
+            grabber = grabTransform.gameObject.AddComponent<PublicOVRGrabber>();
+            grabber.M_GrabVolumes = new Collider[] { grabVolume };
+            grabTransform.name = "EmulatorGrab";
         }
 
         protected override void OnStart() { }
