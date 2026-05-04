@@ -24,7 +24,13 @@ public class Synapse : NDInteractables
     public int Id;
 
 
-    public double ActivationTime { get; set; }
+    //public double ActivationTime { get; set; }
+    private double activationTime;
+    public double ActivationTime
+    {
+        get {return activationTime;}
+        set {activationTime = double.NegativeInfinity;}
+    }
 
     public double currentIsyn { get; set; } = 0;
 
