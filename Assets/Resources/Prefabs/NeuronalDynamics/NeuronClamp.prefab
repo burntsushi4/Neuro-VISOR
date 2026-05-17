@@ -170,7 +170,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b5682c8bb520e8a46bbeab52c1a74097, type: 2}
+  - {fileID: 2100000, guid: 5bd7fed36d747d34780989afeb77acb9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -369,6 +369,7 @@ MonoBehaviour:
   radiusRatio: 3
   heightRatio: 3
   highlightSphereScale: 3
+  RescaleCheck: 0
   inactiveMaterial: {fileID: 2100000, guid: b5682c8bb520e8a46bbeab52c1a74097, type: 2}
   capHolders:
   - {fileID: 5483127028994316193}
